@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<title>city模型</title>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+		<style>
+			body {
+				background:#000;
+				color:#fff;
+				padding:0;
+				margin:0;
+				font-weight: bold;
+				overflow:hidden;
+			}
+
+		</style>
+	</head>
+
+	<body>
+		<script src="js/three.js"></script>
+		<script src="js/loaders/OBJLoader.js"></script>
+		<script src="js/Stats.js"></script>
+		<script src="js/controls/TrackballControls.js"></script>
+		<script src="js/Detector.js"></script>
+		
+
+		<script>
+
+			if ( ! Detector.webgl ) Detector.addGetWebGLMessage();
+
+			var statsEnabled = true;
+
+			var container, stats, loader, obj;
+
+			var camera, scene, renderer, controls;
+
+			var mesh;
+
+			var spotLight,directionalLight;
+
+			var mouseX = 0;
+			var mouseY = 0;
+
+			var targetX = 0;
+			var targetY = 0;
+
+			var windowHalfX = window.innerWidth / 2;
+			var windowHalfY = window.innerHeight / 2;
+
+			init();
+			
+
+			function init() {
+
+				container = document.createElement( 'div' );
+				document.body.appendChild( container );
+
+				//
+				camera = new THREE.PerspectiveCamera( 27, window.innerWidth / window.innerHeight, 1, 1000000 );
+				camera.position.z = 1200;
+
+				scene = new THREE.Scene();
+				scene.background = new THREE.Color( 0x060708 );
+
+				/*控制*/
+				controls = new THREE.TrackballControls( camera );
+
+				controls.rotateSpeed = 1.0;//按住鼠标左键后拖动查看时的旋转速度 
+				controls.zoomSpeed = 0.5;//用滚轮调整大小(远近)时候的速度 
+				controls.panSpeed = 1.0;//按住鼠标右键后的平移速度 
+
+				controls.noZoom = false;//如果设置为true, 则禁用 鼠标滚轮调整大小(远近)的功能 
+				controls.noPan = false;//如设置为true, 则禁用 按下鼠标右键平移的功能
+				controls.noRotate = false;
+				// controls.minDistance = 10;   //设置滚轮能滚到的最近距离  
+				//controls.maxDistance = 1000;   //设置滚轮能滚到的最远距离
+
+				controls.staticMoving = false;//试了一下, 如果设置为false, 则移动速度贼鸡儿快,嗖的一下就不见了, 具体是干啥玩意的没摸清  
+				controls.dynamicDampingFactor = 0.3; //动态阻尼, 蛤? 我也不知道是啥,翻译过来就是  
+				controls.keys = [ 0, 0, 0 ];//注释掉貌似效果也没啥区别,反正我是没发现  
+				/*控制*/
+
+				var manager = new THREE.LoadingManager();
+				manager.onProgress = function ( item, loaded, total ) {
+					console.log( item, loaded, total );
+				};
+
+				var texture = new THREE.Texture();
+
+				var onProgress = function ( xhr ) {
+					if ( xhr.lengthComputable ) {
+						var percentComplete = xhr.loaded / xhr.total * 100;
+						console.log( Math.round(percentComplete, 2) + '% downloaded' );
+					}
+				};
+				//输出错误信息
+				var onError = function ( xhr ) {
+					
+				};
+				var loader = new THREE.ImageLoader( manager );
+				loader.load( 'images/89.png', function ( image ) {
+					texture.image = image;
+					texture.needsUpdate = true;
+				} );
+
+				var cubeMat = new THREE.MeshBasicMaterial({color:"blue",fog:false});
+				var cubeMat1 = new THREE.MeshLambertMaterial({color: 'blue'});
+
+				var cubeMat2 = new THREE.MeshPhongMaterial({
+			        color: 0x7777ff,
+			        specular: 0x7777ff,
+			        shininess: 30
+		        });
+
+				var loader = new THREE.OBJLoader( manager );	
+				loader.load( 'models/model.obj', function ( object ) {
+					object.traverse( function ( child ) {
+						if ( child instanceof THREE.Mesh ) {
+							child.material.map = texture;
+							// child.material = cubeMat1;
+							child.scale.set(0.003,0.003,0.003);
+						}
+
+					} );
+					obj = object;
+					object.castShadow = true;
+
+					scene.add( obj );
+
+					// LIGHTS
+					//半球光
+					// scene.add( new THREE.HemisphereLight( '#2a1ec7', '#fff') );
+
+					//方向光
+					directionalLight = new THREE.DirectionalLight( '#fff' );
+					directionalLight.position.set( -10, 1, 0 );
+					scene.add( directionalLight );
+
+					directionalLight = new THREE.DirectionalLight( '#fff' );
+					directionalLight.position.set( 1, 1, 10 );
+					scene.add( directionalLight );
+
+					// 点光源
+					spotLight = new THREE.SpotLight( "#fff", 2 );
+					spotLight.position.set( 10, 2, 0 );
+					spotLight.position.multiplyScalar( 700 );
+					scene.add( spotLight );
+
+					spotLight.target = obj;
+					spotLight.castShadow = true;
+
+					spotLight.shadow.mapSize.width = 2048;
+					spotLight.shadow.mapSize.height = 2048;
+
+					spotLight.shadow.camera.near = 1;
+					spotLight.shadow.camera.far = 10000;
+
+					spotLight.shadow.camera.fov = 27;
+
+					spotLight.shadow.bias = -0.005;
+
+					//环境光
+					// var ambient = new THREE.AmbientLight( "#fff" );
+					// scene.add( ambient );
+
+					// LIGHTS
+
+					renderer = new THREE.WebGLRenderer( { antialias: false } );
+					renderer.setPixelRatio( window.devicePixelRatio );
+					renderer.setSize( window.innerWidth, window.innerHeight );
+					container.appendChild( renderer.domElement );
+
+					renderer.shadowMap.enabled = true;
+					renderer.shadowMap.renderReverseSided = false;
+
+					renderer.gammaInput = true;
+					renderer.gammaOutput = true;
+
+					if ( statsEnabled ) {
+						stats = new Stats();
+						container.appendChild( stats.domElement );
+					}
+					// EVENTS
+					document.addEventListener( 'mousemove', onDocumentMouseMove, false );
+					window.addEventListener( 'resize', onWindowResize, false );
+
+					animate();
+
+				}, onProgress, onError );
+
+				
+			}
+
+			function onWindowResize( event ) {
+				renderer.setSize( window.innerWidth, window.innerHeight );
+				camera.aspect = window.innerWidth / window.innerHeight;
+				camera.updateProjectionMatrix();
+			}
+
+			function onDocumentMouseMove( event ) {
+				mouseX = ( event.clientX - windowHalfX );
+				mouseY = ( event.clientY - windowHalfY );
+			}
+
+			function animate() {
+				requestAnimationFrame( animate );
+				controls.update();
+				render();
+				if ( statsEnabled ) {
+					stats.update();
+				}
+			}
+
+			function render() {
+				targetX = mouseX * .001;
+				targetY = mouseY * .001;
+				// obj.rotation.y += 0.005;
+				// obj.rotation.x += 0.01;
+				renderer.render( scene, camera );
+			}
+		</script>
+	</body>
+</html>
