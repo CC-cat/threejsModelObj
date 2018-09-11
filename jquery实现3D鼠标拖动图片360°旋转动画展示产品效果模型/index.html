@@ -1,0 +1,33 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>jquery实现3D鼠标拖动图片360°旋转动画展示产品效果 - xw素材网</title>
+
+<link rel="stylesheet" type="text/css" href="css/style.css" />
+
+<script type="text/javascript" src="js/jquery.js"></script>
+<script type="text/javascript" src="js/3deye.min.js"></script>
+<script type="text/javascript">
+$(document).ready(function(){
+	
+	$("#myCar").vc3dEye({
+		imagePath:"images/",
+		totalImages:51,
+		imageExtension:"png"
+	});
+	
+});
+</script>
+
+</head>
+
+<body>
+		
+<div id="myCar"></div>
+
+<h2>用手指或鼠标托动这辆车感受一下!!</h2>
+<h3>3dEye.js 兼容大部分主流浏览器，兼容Android and iOS ！放心使用吧！</h3>
+
+</body>
+</html>
